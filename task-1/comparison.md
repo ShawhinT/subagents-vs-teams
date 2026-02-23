@@ -8,11 +8,10 @@
 
 | Metric | Subagent | Agent Team |
 |---|---|---|
-| **Active compute time** | 36.8 min | 21.0 min |
-| **Wall-clock time** | ~37 min | 42.1 min |
-| Orchestration overhead | ~1 min | 21.1 min |
-| Sessions | 1 | 7 |
-| API turns | 201 | 197 |
+| **Run time** | 32.6 min | 24.4 min |
+| **Total compute time** | 32.6 min | 34.2 min |
+| Sessions | 1 | 19 |
+| API turns | 81 | 197 |
 | Peak context window | 166,653 | 74,608 (largest session) |
 | Compaction events | 1 (at turn 184) | 0 |
 | Output tokens | 10,249 | 4,323 |

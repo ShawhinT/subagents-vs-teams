@@ -1,4 +1,6 @@
-You are responsible for completing the following task. Decide for yourself how best to accomplish it. Do your own research as needed (e.g., look up Shaw Talebi's YouTube, existing content, or landing page best practices) to write compelling copy and make informed design decisions.
+You are responsible for completing the following task. Decide for yourself how best to accomplish it. 
+
+Do your own research as needed (e.g., look up Shaw Talebi's YouTube, existing content, or landing page best practices) to write compelling copy and make informed design decisions.
 
 Task: Design and build a landing page for "AI Builder Academy" — a self-paced program that teaches engineers and technical professionals how to design, build, and ship real AI applications end-to-end.
 
