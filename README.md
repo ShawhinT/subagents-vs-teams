@@ -10,7 +10,7 @@ Benchmarking Claude Code's **subagent** approach (single session using the Task 
 |---|---|---|---|
 | **Task 1: Lead List** | Run time | 32.6 min | 24.4 min |
 | | Est. unique tokens | ~232k | ~265k |
-| | Output quality | 50/50 emails | 6/50 emails |
+| | Output quality | 50/50 emails | 8/50 emails |
 | **Task 2: Web App** | Run time | 13.4 min | 10.9 min |
 | | Est. unique tokens | ~99k | ~111k |
 | | Output quality | Better design and features | Worse design, no progress bar|
