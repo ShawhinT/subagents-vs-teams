@@ -32,7 +32,7 @@ Analyze the Claude Code session logs for a completed subagent vs agent team comp
 
    **Est. unique tokens**: For subagent: peak context + total output. For agent team: sum of peak contexts across sessions (note overlap from shared system prompt, typically ~20k).
 
-4. Write a `comparison.md` in the task directory using this format:
+4. Write a `README.md` in the task directory using this format:
 
 ```markdown
 # Task N: [3-Word Task Description]

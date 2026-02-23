@@ -10,7 +10,7 @@ This repo benchmarks Claude Code's **subagent** approach (single session using t
 
 - `task-N/subagent/` — prompt and deliverables for the subagent run (single Claude Code session)
 - `task-N/team/` — prompt and deliverables for the agent team run (multi-session); includes `.claude/settings.local.json` to enable agent teams
-- `task-N/comparison.md` — evaluation results comparing both approaches
+- `task-N/README.md` — evaluation results comparing both approaches
 - `evaluate.md` — instructions for analyzing JSONL session logs and generating comparison tables
 
 ## Workflow
@@ -19,7 +19,7 @@ Each task follows the same pattern:
 
 1. **Run subagent**: Open Claude Code in the repo root, paste `task-N/subagent/prompt.txt`. The subagent prompt tells Claude to complete the task itself (using subagents/Task tool as it sees fit).
 2. **Run agent team**: Open Claude Code inside `task-N/team/`, paste `task-N/team/prompt.txt`. The agent team prompt instructs Claude to delegate via agent teams rather than working alone. The `settings.local.json` in that directory enables the experimental agent teams feature.
-3. **Evaluate**: Use `evaluate.md` to parse JSONL session logs from `~/.claude/projects/` and produce `task-N/comparison.md`.
+3. **Evaluate**: Use `evaluate.md` to parse JSONL session logs from `~/.claude/projects/` and produce `task-N/README.md`.
 
 ## Evaluation Details
 
