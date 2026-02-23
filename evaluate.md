@@ -2,7 +2,7 @@ Analyze the Claude Code session logs for a completed subagent vs agent team comp
 
 ## What to do
 
-1. Find the JSONL session logs in `~/.claude/projects/`. Match the project directory to each run by looking for paths containing the task directory name (e.g. `task-1-agent-team` for the agent team, and the parent repo path for the subagent).
+1. Find the JSONL session logs in `~/.claude/projects/`. Match the project directory to each run by looking for paths containing the task directory name (e.g. `task-1-team` for the agent team, and the parent repo path for the subagent).
 
 2. For each JSONL file, parse assistant messages that contain `usage` data. Extract per-turn:
    - `input_tokens`
@@ -61,7 +61,7 @@ Analyze the Claude Code session logs for a completed subagent vs agent team comp
 | [task-specific metric 2] | X | X |
 | [task-specific metric 3] | X | X |
 
-*Evaluate the deliverables in `task-N/subagent/` and `task-N/agent-team/` against the criteria in `prompt.txt`. Add rows for each measurable criterion. Include percentages where applicable.*
+*Evaluate the deliverables in `task-N/subagent/` and `task-N/team/` against the criteria in `prompt.txt`. Add rows for each measurable criterion. Include percentages where applicable.*
 
 **Notes**:
 - [any notable observations: compaction, parallelism, errors, etc.]
@@ -70,9 +70,9 @@ Analyze the Claude Code session logs for a completed subagent vs agent team comp
 ## Where to look
 
 - Session logs: `~/.claude/projects/<project-path-with-dashes>/*.jsonl`
-- Task prompts: `task-N/subagent/prompt.txt` and `task-N/agent-team/prompt.txt`
+- Task prompts: `task-N/subagent/prompt.txt` and `task-N/team/prompt.txt`
 - The subagent sessions are typically in a project directory matching the task subdirectory (e.g. `-task-2-subagent`) or the parent repo's project directory
-- The agent team orchestrator session is in a project directory named after the agent-team subdirectory
+- The agent team orchestrator session is in a project directory named after the team subdirectory
 - **Sub-agent session logs** are nested inside the orchestrator's session directory at `<session-id>/subagents/agent-<agent-id>.jsonl` — they are NOT in separate project directories. List the `<session-id>/subagents/` directory to find them.
 
 ## JSONL structure

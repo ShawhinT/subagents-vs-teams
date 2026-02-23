@@ -23,12 +23,12 @@ Benchmarking Claude Code's **subagent** approach (single session using the Task 
 Each task follows the same pattern:
 
 1. **Subagent run** — Open Claude Code in `task-N/subagent/` and paste `prompt.txt`. Claude completes the task in a single session, using the Task tool as it sees fit.
-2. **Agent team run** — Open Claude Code in `task-N/agent-team/` and paste `prompt.txt`. The `settings.local.json` in that directory enables the experimental agent teams feature.
+2. **Agent team run** — Open Claude Code in `task-N/team/` and paste `prompt.txt`. The `settings.local.json` in that directory enables the experimental agent teams feature.
 3. **Evaluate** — Use `evaluate.md` to parse JSONL session logs from `~/.claude/projects/` and produce `task-N/comparison.md`.
 
 ## Structure
 
 - `task-N/subagent/` — prompt and deliverables for the subagent run
-- `task-N/agent-team/` — prompt and deliverables for the agent team run
+- `task-N/team/` — prompt and deliverables for the agent team run
 - `task-N/comparison.md` — per-task evaluation
 - `evaluate.md` — instructions for log analysis

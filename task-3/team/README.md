@@ -28,7 +28,7 @@ The app runs with `live=True`, so it will auto-reload on file changes during dev
 ## Project Structure
 
 ```
-agent-team/
+team/
 ├── main.py           # FastHTML app — all page sections and routing
 ├── static/
 │   ├── style.css     # All custom styles (fonts, colors, layout, responsive)
