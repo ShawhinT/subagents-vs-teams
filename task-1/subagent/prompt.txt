@@ -1,0 +1,24 @@
+You are responsible for completing the following task. Decide for yourself how best to accomplish it.
+
+Task: Build a lead list of 50 contacts at technology and software companies in the Dallas, TX area.
+Each lead must include:
+
+- Company name
+- Contact full name
+- Contact title
+- Contact email address
+
+Ideal leads meet all four of the following criteria. Partial matches are acceptable but scored lower:
+
+1. Located in the Dallas metropolitan area
+2. Private equity backed
+3. Technology or software company
+4. Midsized — between 200 and 5,000 employees
+
+Scoring: Each lead earns 1 point per criterion satisfied (max 5 points: 4 criteria + verified contact). A lead with an unverifiable or potentially fabricated company, contact, or email scores 0 regardless of other criteria.
+
+Verification requirement: Before finalizing the list, verify that each company and contact is real and findable through independent sources. Any lead you cannot verify should be flagged or removed. Do not include guessed or inferred email addresses — only include contact information you have confirmed or have high confidence in.
+
+Deliverable: A structured list saved to leads.csv with columns: Company, PE_Backed (Y/N/Unknown), Employees (estimate), Contact_Name, Contact_Title, Contact_Email, Score (0–5), Verification_Notes.
+
+Today's date is: February 23, 2026
