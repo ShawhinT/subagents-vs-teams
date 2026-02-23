@@ -1,0 +1,9 @@
+[project]
+name = "subagent"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "python-fasthtml>=0.12.47",
+    "yt-dlp>=2026.2.21",
+]

@@ -1,0 +1,906 @@
+
+▗ ▗   ▖ ▖  Claude Code v2.1.50
+           Sonnet 4.6 · Claude Max
+  ▘▘ ▝▝    ~/Documents/_code/_stv/_repos/subagents-vs-teams/task-2/subagent
+
+❯ You are responsible for completing the following task. Decide for         
+  yourself how best to accomplish it.                                       
+                                                                            
+  Task: Build a "YouTube Course Creator" web app. The user pastes a YouTube 
+   playlist URL and gets a clean, distraction-free course page with         
+  progress tracking and per-lesson notes.                                   
+                                                                            
+  ## Tech Stack                                                             
+                                                                            
+  - **uv** for project management. Initialize with `uv init`, add           
+  dependencies with `uv add`. All commands should run through `uv run`      
+  (e.g., `uv run python main.py`).                                          
+  - **FastHTML** (`from fasthtml.common import *`, `fast_app()`, HTMX-style 
+   partial updates). No React, no heavy JS frameworks.                      
+  - **yt-dlp** (Python library) for playlist metadata extraction. Extract   
+  titles, video IDs, thumbnails, and ordering — do not download any video   
+  files. No YouTube Data API key required.                                  
+  - **SQLite** via FastHTML's built-in database support for all             
+  persistence.                                                              
+                                                                            
+  ## Features to Build                                                      
+                                                                            
+  1. **Playlist input**: A home page with a single input field for a        
+  YouTube playlist URL. On submit, fetch playlist metadata via yt-dlp and   
+  redirect to the course page.                                              
+                                                                            
+  2. **Playlist metadata extraction**: Use yt-dlp to extract the playlist   
+  title and an ordered list of videos (title, video ID, thumbnail URL,      
+  duration). Cache the result in SQLite so repeat visits don't re-fetch.    
+                                                                            
+  3. **Course page layout**:                                                
+     - Left sidebar: ordered lesson list showing title, duration, and       
+  completion status. Clicking a lesson loads it in the main area.           
+     - Main area: YouTube embed player (iframe) for the selected lesson,    
+  lesson title, and a notes editor below.                                   
+     - The sidebar should highlight the current lesson and visually         
+  distinguish completed lessons.                                            
+                                                                            
+  4. **Completion tracking**: A "Mark complete" / "Mark incomplete" toggle  
+  per lesson. State persists in SQLite. The sidebar reflects completion     
+  status (e.g., checkmark icon or strikethrough).                           
+                                                                            
+  5. **Per-lesson notes**: A textarea below the video player for freeform   
+  notes on the current lesson. Notes auto-save (on blur or via HTMX partial 
+   update) to SQLite. Notes persist across page reloads.                    
+                                                                            
+  6. **Local persistence (SQLite)**: Three concerns stored locally:         
+     - Playlist cache (playlist URL → metadata, so yt-dlp isn't called      
+  again)                                                                    
+     - Lesson completion state (playlist + video → complete boolean)        
+     - Lesson notes (playlist + video → text)                               
+                                                                            
+  ## Out of Scope (Do Not Build)                                            
+                                                                            
+  - User accounts or authentication                                         
+  - Shareable links or multi-user features                                  
+  - Quizzes, certificates, or assessments                                   
+  - AI-generated summaries or transcripts                                   
+  - Analytics dashboards or progress charts                                 
+                                                                            
+  ## Acceptance Criteria                                                    
+                                                                            
+  The app is scored on 6 points (1 point each):                             
+                                                                            
+  1. **Runs**: `uv run python main.py` starts the server with no errors,    
+  and the home page loads in a browser.                                     
+  2. **Playlist fetch**: Pasting a valid YouTube playlist URL fetches       
+  metadata and displays the course page with all videos listed in order.    
+  3. **Video playback**: Clicking a lesson in the sidebar loads the correct 
+   YouTube embed in the main area.                                          
+  4. **Completion toggle**: Toggling a lesson's completion status persists  
+  across page reloads.                                                      
+  5. **Notes**: Writing a note for a lesson persists across page reloads.   
+  6. **Playlist cache**: Visiting the same playlist URL a second time loads 
+   instantly from SQLite without calling yt-dlp again.                      
+                                                                            
+  Before finishing, verify the app against every acceptance criterion and   
+  fix any failures.                                                         
+                                                                            
+  ## Deliverable                                                            
+                                                                            
+  A working FastHTML application in this directory, managed by uv. At       
+  minimum: `main.py` (the app) and a `pyproject.toml` with dependencies     
+  (`python-fasthtml`, `yt-dlp`). Include a brief README.md with the startup 
+   command (`uv run python main.py`).                                       
+                                                                            
+  Test with this playlist (or any public playlist):                         
+  https://www.youtube.com/playlist?list=PLz-ep5RbHosUgGar7MWEEOHp8xolnBbvm  
+
+⏺ Recalled 1 memory (ctrl+o to expand)
+
+⏺ Let me look at the existing task structure and understand FastHTML before
+  building.
+
+⏺ Bash(pip show python-fasthtml 2>/dev/null || uv pip show python-fasthtml
+      2>/dev/null || echo "not installed")
+  ⎿  not installed
+
+⏺ Bash(which uv && uv --version)
+  ⎿  /Users/shaw/.local/bin/uv
+     uv 0.8.13 (ede75fe62 2025-08-21)
+
+⏺ Bash(uv init --no-readme 2>&1)
+  ⎿  Initialized project `subagent`
+
+⏺ Bash(uv add python-fasthtml yt-dlp 2>&1)
+  ⎿  Using CPython 3.13.7 interpreter at: /opt/homebrew/opt/python@3.13/bin
+     /python3.13
+     Creating virtual environment at: .venv
+     … +34 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "from fasthtml.common import *; help(fast_app)" 2>&1 |
+      head -60)
+  ⎿  Help on function fast_app in module fasthtml.fastapp:
+
+     fast_app(
+     … +20 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "from fasthtml.common import *; import inspect;
+      print(inspect.getsource(fast_app))" 2>&1 | head -80)
+  ⎿  def fast_app(
+             db_file:Optional[str]=None, # Database file name, if needed
+             render:Optional[callable]=None, # Function used to render defa
+     … +54 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "from fastlite import database; db =
+      database(':memory:'); print(dir(db)); print(dir(db.t))" 2>&1)
+  ⎿  ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__
+     ', '__firstlineno__', '__format__', '__ge__', '__getattribute__', '__g
+     etitem__', '__getstate__', '__gt__', '__hash__', '__init__', '__init_s
+     … +16 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "
+      import yt_dlp…)
+  ⎿  keys: ['id', 'title', 'availability', 'channel_follower_count', 'descr
+     iption', 'tags', 'thumbnails', 'modified_date', 'view_count', 'playlis
+     t_count', 'channel', 'channel_id', 'uploader_id', 'uploader', 'channel
+     … +18 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "
+      from fastlite import database…)
+  ⎿  [(1, 'hello')]
+     ['test']
+     <class 'apswutils.db.Table'>
+     … +22 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "
+      from fastlite import database…)
+  ⎿  [{'playlist_id': 'abc', 'title': 'My Playlist', 'videos_json': '[]'}]
+     {'playlist_id': 'abc', 'title': 'My Playlist', 'videos_json': '[]'}
+     {'playlist_id': 'abc', 'title': 'My Playlist', 'videos_json': '[]'}
+
+⏺ Bash(uv run python -c "
+      from fasthtml.common import *…)
+  ⎿  class FastHTML(Starlette):
+         def __init__(self, debug=False, routes=None, middleware=None, titl
+     e: str = "FastHTML page", exception_handlers=None,
+     … +33 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "
+      from fasthtml.common import *…)
+  ⎿  app type: <class 'fasthtml.core.FastHTML'>
+     rt type: <class 'method'>
+
+⏺ Bash(uv run python -c "
+      from fasthtml.common import *…)
+  ⎿  Traceback (most recent call last):
+       File "<string>", line 5, in <module>
+         src = inspect.getsource(FastHTML._add_method)
+     … +2 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "
+      from fasthtml.common import *…)
+  ⎿  def flat_xt(lst):
+     "Flatten lists"
+         result = []
+     … +5 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "
+      from fasthtml.core import *…)
+  ⎿  def respond(req, heads, bdy):
+     "Default FT response creation function"
+         body_wrap = getattr(req, 'body_wrap', noop_body)
+     … +4 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "
+      from fasthtml.core import *…)
+  ⎿  Traceback (most recent call last):
+       File "<string>", line 5, in <module>
+         src = inspect.getsource(HTMLResponse)
+     … +3 lines (ctrl+o to expand)
+
+⏺ Bash(uv run python -c "
+      from fasthtml.core import *…)
+  ⎿  _resp error: name '_resp' is not defined
+
+⏺ Bash(uv run python -c "
+      from fasthtml.core import *…)
+  ⎿  class FtResponse:
+     "Wrap an FT response with any Starlette `Response`"
+         def __init__(self, content, status_code:int=200, headers=None, cls
+     … +15 lines (ctrl+o to expand)
+
+⏺ Searched for 3 patterns, read 1 file (ctrl+o to expand)
+
+⏺ Now I have a clear understanding of the FastHTML API. Let me build the
+  complete app.
+
+⏺ Write(main.py)
+  ⎿  Error writing file
+
+⏺ Read 1 file (ctrl+o to expand)
+
+⏺ Write(main.py)
+  ⎿  Added 414 lines, removed 4 lines
+        1 -def main():                                                   
+        2 -    print("Hello from subagent!")                             
+        1 +from fasthtml.common import *                                 
+        2 +from fastlite import database                                 
+        3 +import yt_dlp                                                 
+        4 +import json                                                   
+        5 +import time                                                   
+        6                                                                
+        7 +# ─── Database ────────────────────────────────────────────── 
+          +──────────────────                                            
+        8                                                                
+        9 -if __name__ == "__main__":                                    
+       10 -    main()                                                    
+        9 +db = database("course.db")                                    
+       10 +                                                              
+       11 +db.execute("""                                                
+       12 +    CREATE TABLE IF NOT EXISTS playlists (                    
+       13 +        playlist_id TEXT PRIMARY KEY,                         
+       14 +        url         TEXT NOT NULL,                            
+       15 +        title       TEXT NOT NULL,                            
+       16 +        videos_json TEXT NOT NULL,                            
+       17 +        created_at  REAL                                      
+       18 +    )                                                         
+       19 +""")                                                          
+       20 +                                                              
+       21 +db.execute("""                                                
+       22 +    CREATE TABLE IF NOT EXISTS progress (                     
+       23 +        playlist_id TEXT NOT NULL,                            
+       24 +        video_id    TEXT NOT NULL,                            
+       25 +        completed   INTEGER DEFAULT 0,                        
+       26 +        notes       TEXT DEFAULT '',                          
+       27 +        PRIMARY KEY (playlist_id, video_id)                   
+       28 +    )                                                         
+       29 +""")                                                          
+       30 +                                                              
+       31 +# ─── Helpers ─────────────────────────────────────────────── 
+          +──────────────────                                            
+       32 +                                                              
+       33 +def fmt_dur(secs):                                            
+       34 +    if not secs:                                              
+       35 +        return ""                                             
+       36 +    m, s = divmod(int(secs), 60)                              
+       37 +    h, m = divmod(m, 60)                                      
+       38 +    return f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}"    
+       39 +                                                              
+       40 +                                                              
+       41 +def get_prog(playlist_id, video_id):                          
+       42 +    row = db.execute(                                         
+       43 +        "SELECT completed, notes FROM progress WHERE          
+          +playlist_id=? AND video_id=?",                                
+       44 +        (playlist_id, video_id),                              
+       45 +    ).fetchone()                                              
+       46 +    return {"completed": bool(row[0]), "notes": row[1] or ""} 
+          + if row else {"completed": False, "notes": ""}                
+       47 +                                                              
+       48 +                                                              
+       49 +def upsert_completed(playlist_id, video_id, completed):       
+       50 +    db.execute(                                               
+       51 +        "INSERT OR IGNORE INTO progress (playlist_id,         
+          +video_id, completed, notes) VALUES (?,?,0,'')",               
+       52 +        (playlist_id, video_id),                              
+       53 +    )                                                         
+       54 +    db.execute(                                               
+       55 +        "UPDATE progress SET completed=? WHERE playlist_id=?  
+          +AND video_id=?",                                              
+       56 +        (int(completed), playlist_id, video_id),              
+       57 +    )                                                         
+       58 +                                                              
+       59 +                                                              
+       60 +def upsert_notes(playlist_id, video_id, notes):               
+       61 +    db.execute(                                               
+       62 +        "INSERT OR IGNORE INTO progress (playlist_id,         
+          +video_id, completed, notes) VALUES (?,?,0,'')",               
+       63 +        (playlist_id, video_id),                              
+       64 +    )                                                         
+       65 +    db.execute(                                               
+       66 +        "UPDATE progress SET notes=? WHERE playlist_id=? AND  
+          +video_id=?",                                                  
+       67 +        (notes, playlist_id, video_id),                       
+       68 +    )                                                         
+       69 +                                                              
+       70 +                                                              
+       71 +# ─── CSS ─────────────────────────────────────────────────── 
+          +──────────────────                                            
+       72 +                                                              
+       73 +CSS = """                                                     
+       74 +*, *::before, *::after { box-sizing: border-box; margin: 0;   
+          +padding: 0; }                                                 
+       75 +body { font-family: system-ui, -apple-system,                 
+          +BlinkMacSystemFont, "Segoe UI", sans-serif;                   
+       76 +       background: #0f0f0f; color: #e0e0e0; }                 
+       77 +                                                              
+       78 +/* ── Home ── */                                              
+       79 +.home { display:flex; flex-direction:column;                  
+          +align-items:center; justify-content:center;                   
+       80 +        min-height:100vh; gap:1.25rem; padding:2rem; }        
+       81 +.home h1 { font-size:2rem; font-weight:700; color:#fff;       
+          +letter-spacing:-0.02em; }                                     
+       82 +.home p  { color:#888; font-size:0.9375rem; }                 
+       83 +.home form { display:flex; gap:0.5rem; width:100%;            
+          +max-width:640px; }                                            
+       84 +.home form input { flex:1; padding:0.75rem 1rem;              
+          +border-radius:8px; border:1px solid #333;                     
+       85 +                   background:#1a1a1a; color:#fff;            
+          +font-size:0.9375rem; outline:none; }                          
+       86 +.home form input:focus { border-color:#555; }                 
+       87 +.home form button { padding:0.75rem 1.25rem;                  
+          +border-radius:8px; border:none; background:#e00;              
+       88 +                    color:#fff; font-size:0.9375rem;          
+          +font-weight:600; cursor:pointer; }                            
+       89 +.home form button:hover { background:#c00; }                  
+       90 +.err { color:#f87171; font-size:0.875rem; }                   
+       91 +                                                              
+       92 +/* ── Course layout ── */                                     
+       93 +.course-layout { display:flex; height:100vh; overflow:hidden; 
+          + }                                                            
+       94 +                                                              
+       95 +/* ── Sidebar ── */                                           
+       96 +.sidebar { width:300px; min-width:300px; background:#161616;  
+          +border-right:1px solid #252525;                               
+       97 +           overflow-y:auto; display:flex;                     
+          +flex-direction:column; }                                      
+       98 +.sb-header { padding:1rem; border-bottom:1px solid #252525; } 
+       99 +.sb-label  { font-size:0.6875rem; font-weight:700;            
+          +color:#555; text-transform:uppercase;                         
+      100 +             letter-spacing:0.08em; margin-bottom:0.4rem; }   
+      101 +.sb-title  { font-size:0.9rem; color:#ddd; line-height:1.4; } 
+      102 +.prog-bar  { margin-top:0.75rem; height:3px;                  
+          +background:#2a2a2a; border-radius:2px; }                      
+      103 +.prog-fill { height:100%; background:#22c55e;                 
+          +border-radius:2px; }                                          
+      104 +.prog-text { font-size:0.7rem; color:#555;                    
+          +margin-top:0.35rem; }                                         
+      105 +                                                              
+      106 +.lesson-list { list-style:none; padding:0.375rem; }           
+      107 +.lesson-item { margin-bottom:2px; }                           
+      108 +.l-btn { display:flex; align-items:flex-start; gap:0.625rem;  
+          +padding:0.625rem 0.75rem;                                     
+      109 +          width:100%; text-align:left; background:none;       
+          +border:none; color:#ccc;                                      
+      110 +          cursor:pointer; border-radius:6px;                  
+          +transition:background 0.1s; }                                 
+      111 +.l-btn:hover  { background:#222; }                            
+      112 +.l-btn.active { background:#282828; }                         
+      113 +.l-btn.done .l-title { text-decoration:line-through;          
+          +color:#555; }                                                 
+      114 +.l-num  { font-size:0.6875rem; color:#444; min-width:1.25rem; 
+          + margin-top:1px; flex-shrink:0; }                             
+      115 +.l-info { flex:1; min-width:0; }                              
+      116 +.l-title { font-size:0.8125rem; line-height:1.4;              
+          +word-break:break-word; }                                      
+      117 +.l-dur   { font-size:0.6875rem; color:#555;                   
+          +margin-top:0.2rem; }                                          
+      118 +.l-check { color:#22c55e; flex-shrink:0; margin-top:1px;      
+          +font-size:0.875rem; }                                         
+      119 +                                                              
+      120 +/* ── Main area ── */                                         
+      121 +.main-area  { flex:1; overflow-y:auto; min-width:0; }         
+      122 +.main-inner { max-width:900px; margin:0 auto; padding:1.5rem  
+          +2rem 4rem; }                                                  
+      123 +.vid-wrap   { width:100%; aspect-ratio:16/9; background:#000; 
+          + border-radius:12px;                                          
+      124 +              overflow:hidden; margin-bottom:1.5rem; }        
+      125 +.vid-wrap iframe { width:100%; height:100%; border:none;      
+          +display:block; }                                              
+      126 +                                                              
+      127 +.lesson-hdr { display:flex; align-items:flex-start;           
+          +justify-content:space-between;                                
+      128 +              gap:1rem; margin-bottom:1.5rem; }               
+      129 +.lesson-hdr h2 { font-size:1.0625rem; color:#fff;             
+          +line-height:1.4; }                                            
+      130 +.toggle-btn { flex-shrink:0; padding:0.4375rem 0.875rem;      
+          +border-radius:6px;                                            
+      131 +              border:1px solid #333; background:#1c1c1c;      
+          +color:#bbb;                                                   
+      132 +              font-size:0.8125rem; font-weight:500;           
+          +cursor:pointer; white-space:nowrap; }                         
+      133 +.toggle-btn:hover { border-color:#555; color:#fff; }          
+      134 +.toggle-btn.done  { border-color:#166534; background:#14532d; 
+          + color:#4ade80; }                                             
+      135 +.toggle-btn.done:hover { background:#15803d; }                
+      136 +                                                              
+      137 +.notes-label { font-size:0.6875rem; font-weight:700;          
+          +color:#555; text-transform:uppercase;                         
+      138 +               letter-spacing:0.08em; margin-bottom:0.5rem; } 
+      139 +.notes-ta { width:100%; min-height:180px; padding:0.75rem;    
+          +border-radius:8px;                                            
+      140 +            border:1px solid #252525; background:#111;        
+          +color:#ddd; font-size:0.875rem;                               
+      141 +            font-family:inherit; resize:vertical;             
+          +outline:none; }                                               
+      142 +.notes-ta:focus { border-color:#444; }                        
+      143 +"""                                                           
+      144 +                                                              
+      145 +# ─── UI components                                           
+          +────────────────────────────────────────────────────────────  
+      146 +                                                              
+      147 +def sidebar_item(video, idx, playlist_id, current_video_id):  
+      148 +    vid_id = video["id"]                                      
+      149 +    prog = get_prog(playlist_id, vid_id)                      
+      150 +    is_done = prog["completed"]                               
+      151 +                                                              
+      152 +    btn_cls = "l-btn"                                         
+      153 +    if vid_id == current_video_id:                            
+      154 +        btn_cls += " active"                                  
+      155 +    if is_done:                                               
+      156 +        btn_cls += " done"                                    
+      157 +                                                              
+      158 +    return Li(                                                
+      159 +        Button(                                               
+      160 +            Span(str(idx + 1), cls="l-num"),                  
+      161 +            Div(                                              
+      162 +                Span(video["title"], cls="l-title"),          
+      163 +                Span(fmt_dur(video.get("duration")),          
+          +cls="l-dur") if video.get("duration") else "",                
+      164 +                cls="l-info",                                 
+      165 +            ),                                                
+      166 +            Span("✓", cls="l-check") if is_done else "",      
+      167 +            cls=btn_cls,                                      
+      168 +            hx_get=f"/lesson/{playlist_id}/{vid_id}",         
+      169 +            hx_target="#main-area",                           
+      170 +            hx_swap="innerHTML",                              
+      171 +        ),                                                    
+      172 +        id=f"lesson-{vid_id}",                                
+      173 +        cls="lesson-item",                                    
+      174 +    )                                                         
+      175 +                                                              
+      176 +                                                              
+      177 +def render_sidebar(playlist_id, title, videos,                
+          +current_video_id, oob=False):                                 
+      178 +    done = sum(1 for v in videos if get_prog(playlist_id,     
+          +v["id"])["completed"])                                        
+      179 +    total = len(videos)                                       
+      180 +    pct = int(done / total * 100) if total else 0             
+      181 +                                                              
+      182 +    extra = {"hx_swap_oob": "true"} if oob else {}            
+      183 +                                                              
+      184 +    return Div(                                               
+      185 +        Div(                                                  
+      186 +            Div("Course", cls="sb-label"),                    
+      187 +            Div(title, cls="sb-title"),                       
+      188 +            Div(Div(style=f"width:{pct}%", cls="prog-fill"),  
+          +cls="prog-bar"),                                              
+      189 +            Div(f"{done}/{total} completed",                  
+          +cls="prog-text"),                                             
+      190 +            cls="sb-header",                                  
+      191 +        ),                                                    
+      192 +        Ul(                                                   
+      193 +            *[sidebar_item(v, i, playlist_id,                 
+          +current_video_id) for i, v in enumerate(videos)],             
+      194 +            cls="lesson-list",                                
+      195 +        ),                                                    
+      196 +        id="sidebar",                                         
+      197 +        cls="sidebar",                                        
+      198 +        **extra,                                              
+      199 +    )                                                         
+      200 +                                                              
+      201 +                                                              
+      202 +def render_lesson(playlist_id, video, prog):                  
+      203 +    vid_id = video["id"]                                      
+      204 +    is_done = prog["completed"]                               
+      205 +                                                              
+      206 +    return Div(                                               
+      207 +        Div(                                                  
+      208 +            Iframe(                                           
+      209 +                                                              
+          +src=f"https://www.youtube.com/embed/{vid_id}",                
+      210 +                allow="accelerometer; autoplay;               
+          +clipboard-write; encrypted-media; gyroscope;                  
+          +picture-in-picture",                                          
+      211 +                allowfullscreen=True,                         
+      212 +            ),                                                
+      213 +            cls="vid-wrap",                                   
+      214 +        ),                                                    
+      215 +        Div(                                                  
+      216 +            H2(video["title"]),                               
+      217 +            Button(                                           
+      218 +                "✓ Completed" if is_done else "Mark           
+          +complete",                                                    
+      219 +                id="toggle-btn",                              
+      220 +                cls="toggle-btn done" if is_done else         
+          +"toggle-btn",                                                 
+      221 +                hx_post=f"/toggle/{playlist_id}/{vid_id}",    
+      222 +                hx_vals=f'{{"current_video_id":               
+          +"{vid_id}"}}',                                                
+      223 +                hx_target="#toggle-btn",                      
+      224 +                hx_swap="outerHTML",                          
+      225 +            ),                                                
+      226 +            cls="lesson-hdr",                                 
+      227 +        ),                                                    
+      228 +        Div(                                                  
+      229 +            P("Notes", cls="notes-label"),                    
+      230 +            Textarea(                                         
+      231 +                prog["notes"],                                
+      232 +                id="notes-ta",                                
+      233 +                name="notes",                                 
+      234 +                cls="notes-ta",                               
+      235 +                placeholder="Take notes on this lesson…",     
+      236 +                hx_post=f"/notes/{playlist_id}/{vid_id}",     
+      237 +                hx_trigger="blur",                            
+      238 +                hx_swap="none",                               
+      239 +            ),                                                
+      240 +            cls="notes-section",                              
+      241 +        ),                                                    
+      242 +        cls="main-inner",                                     
+      243 +    )                                                         
+      244 +                                                              
+      245 +                                                              
+      246 +# ─── App ─────────────────────────────────────────────────── 
+          +──────────────────                                            
+      247 +                                                              
+      248 +app, rt = fast_app(pico=False, hdrs=[Style(CSS)])             
+      249 +                                                              
+      250 +                                                              
+      251 +@rt("/")                                                      
+      252 +def get():                                                    
+      253 +    return (                                                  
+      254 +        Title("YouTube Course Creator"),                      
+      255 +        Div(                                                  
+      256 +            H1("YouTube Course Creator"),                     
+      257 +            P("Paste a YouTube playlist URL to create a       
+          +distraction-free course page."),                              
+      258 +            Form(                                             
+      259 +                Input(                                        
+      260 +                    name="url",                               
+      261 +                    type="text",                              
+      262 +                                                              
+          +placeholder="https://www.youtube.com/playlist?list=…",        
+      263 +                    autofocus=True,                           
+      264 +                ),                                            
+      265 +                Button("Create Course", type="submit"),       
+      266 +                action="/fetch",                              
+      267 +                method="post",                                
+      268 +            ),                                                
+      269 +            cls="home",                                       
+      270 +        ),                                                    
+      271 +    )                                                         
+      272 +                                                              
+      273 +                                                              
+      274 +@rt("/fetch", methods=["POST"])                               
+      275 +async def post_fetch(url: str):                               
+      276 +    url = url.strip()                                         
+      277 +                                                              
+      278 +    # Cache hit — redirect immediately without calling yt-dlp 
+      279 +    row = db.execute("SELECT playlist_id FROM playlists WHERE 
+          + url=?", (url,)).fetchone()                                   
+      280 +    if row:                                                   
+      281 +        return RedirectResponse(f"/course/{row[0]}",          
+          +status_code=303)                                              
+      282 +                                                              
+      283 +    # Fetch playlist metadata via yt-dlp (no API key          
+          +required)                                                     
+      284 +    ydl_opts = {"quiet": True, "extract_flat": "in_playlist", 
+          + "skip_download": True}                                       
+      285 +    try:                                                      
+      286 +        with yt_dlp.YoutubeDL(ydl_opts) as ydl:               
+      287 +            info = ydl.extract_info(url, download=False)      
+      288 +    except Exception as exc:                                  
+      289 +        return (                                              
+      290 +            Title("YouTube Course Creator"),                  
+      291 +            Div(                                              
+      292 +                H1("YouTube Course Creator"),                 
+      293 +                P("Paste a YouTube playlist URL to create a   
+          +distraction-free course page."),                              
+      294 +                Form(                                         
+      295 +                    Input(name="url", type="text", value=url, 
+      296 +                                                              
+          +placeholder="https://www.youtube.com/playlist?list=…"),       
+      297 +                    Button("Create Course", type="submit"),   
+      298 +                    action="/fetch", method="post",           
+      299 +                ),                                            
+      300 +                P(f"Could not fetch playlist: {exc}",         
+          +cls="err"),                                                   
+      301 +                cls="home",                                   
+      302 +            ),                                                
+      303 +        )                                                     
+      304 +                                                              
+      305 +    playlist_id = info["id"]                                  
+      306 +    title = info.get("title", "Untitled Playlist")            
+      307 +    entries = info.get("entries") or []                       
+      308 +                                                              
+      309 +    videos = []                                               
+      310 +    for e in entries:                                         
+      311 +        if not e:                                             
+      312 +            continue                                          
+      313 +        thumbs = e.get("thumbnails") or []                    
+      314 +        thumbnail = thumbs[-1]["url"] if thumbs else ""       
+      315 +        videos.append({                                       
+      316 +            "id": e["id"],                                    
+      317 +            "title": e.get("title", "Untitled"),              
+      318 +            "duration": e.get("duration"),                    
+      319 +            "thumbnail": thumbnail,                           
+      320 +        })                                                    
+      321 +                                                              
+      322 +    db.execute(                                               
+      323 +        "INSERT OR REPLACE INTO playlists (playlist_id, url,  
+          +title, videos_json, created_at)"                              
+      324 +        " VALUES (?,?,?,?,?)",                                
+      325 +        (playlist_id, url, title, json.dumps(videos),         
+          +time.time()),                                                 
+      326 +    )                                                         
+      327 +                                                              
+      328 +    return RedirectResponse(f"/course/{playlist_id}",         
+          +status_code=303)                                              
+      329 +                                                              
+      330 +                                                              
+      331 +@rt("/course/{playlist_id}")                                  
+      332 +def get_course(playlist_id: str):                             
+      333 +    row = db.execute(                                         
+      334 +        "SELECT title, videos_json FROM playlists WHERE       
+          +playlist_id=?", (playlist_id,)                                
+      335 +    ).fetchone()                                              
+      336 +    if not row:                                               
+      337 +        return RedirectResponse("/", status_code=303)         
+      338 +                                                              
+      339 +    title, videos_json = row                                  
+      340 +    videos = json.loads(videos_json)                          
+      341 +    if not videos:                                            
+      342 +        return (Title(title), Div("No videos in this          
+          +playlist.", style="padding:2rem;color:#888;"))                
+      343 +                                                              
+      344 +    first = videos[0]                                         
+      345 +    prog = get_prog(playlist_id, first["id"])                 
+      346 +                                                              
+      347 +    return (                                                  
+      348 +        Title(title),                                         
+      349 +        Div(                                                  
+      350 +            render_sidebar(playlist_id, title, videos,        
+          +first["id"]),                                                 
+      351 +            Div(render_lesson(playlist_id, first, prog),      
+          +cls="main-area", id="main-area"),                             
+      352 +            cls="course-layout",                              
+      353 +        ),                                                    
+      354 +    )                                                         
+      355 +                                                              
+      356 +                                                              
+      357 +@rt("/lesson/{playlist_id}/{video_id}")                       
+      358 +def get_lesson(playlist_id: str, video_id: str):              
+      359 +    row = db.execute(                                         
+      360 +        "SELECT title, videos_json FROM playlists WHERE       
+          +playlist_id=?", (playlist_id,)                                
+      361 +    ).fetchone()                                              
+      362 +    if not row:                                               
+      363 +        return Div("Playlist not found.",                     
+          +style="padding:2rem;color:#888;")                             
+      364 +                                                              
+      365 +    title, videos_json = row                                  
+      366 +    videos = json.loads(videos_json)                          
+      367 +    video = next((v for v in videos if v["id"] == video_id),  
+          +None)                                                         
+      368 +    if not video:                                             
+      369 +        return Div("Lesson not found.",                       
+          +style="padding:2rem;color:#888;")                             
+      370 +                                                              
+      371 +    prog = get_prog(playlist_id, video_id)                    
+      372 +                                                              
+      373 +    # Main area content + out-of-band sidebar swap (updates   
+          +current-lesson highlight)                                     
+      374 +    return (                                                  
+      375 +        render_lesson(playlist_id, video, prog),              
+      376 +        render_sidebar(playlist_id, title, videos, video_id,  
+          +oob=True),                                                    
+      377 +    )                                                         
+      378 +                                                              
+      379 +                                                              
+      380 +@rt("/toggle/{playlist_id}/{video_id}", methods=["POST"])     
+      381 +def post_toggle(playlist_id: str, video_id: str,              
+          +current_video_id: str = ""):                                  
+      382 +    prog = get_prog(playlist_id, video_id)                    
+      383 +    new_done = not prog["completed"]                          
+      384 +    upsert_completed(playlist_id, video_id, new_done)         
+      385 +                                                              
+      386 +    cv = current_video_id or video_id                         
+      387 +                                                              
+      388 +    row = db.execute(                                         
+      389 +        "SELECT title, videos_json FROM playlists WHERE       
+          +playlist_id=?", (playlist_id,)                                
+      390 +    ).fetchone()                                              
+      391 +    title, videos_json = row                                  
+      392 +    videos = json.loads(videos_json)                          
+      393 +                                                              
+      394 +    # Return updated toggle button (in-place swap) + updated  
+          +sidebar (OOB)                                                 
+      395 +    new_btn = Button(                                         
+      396 +        "✓ Completed" if new_done else "Mark complete",       
+      397 +        id="toggle-btn",                                      
+      398 +        cls="toggle-btn done" if new_done else "toggle-btn",  
+      399 +        hx_post=f"/toggle/{playlist_id}/{video_id}",          
+      400 +        hx_vals=f'{{"current_video_id": "{cv}"}}',            
+      401 +        hx_target="#toggle-btn",                              
+      402 +        hx_swap="outerHTML",                                  
+      403 +    )                                                         
+      404 +                                                              
+      405 +    return new_btn, render_sidebar(playlist_id, title,        
+          +videos, cv, oob=True)                                         
+      406 +                                                              
+      407 +                                                              
+      408 +@rt("/notes/{playlist_id}/{video_id}", methods=["POST"])      
+      409 +async def post_notes(req, playlist_id: str, video_id: str):   
+      410 +    form = await req.form()                                   
+      411 +    notes = form.get("notes", "")                             
+      412 +    upsert_notes(playlist_id, video_id, notes)                
+      413 +    return ""  # silent save — no UI update needed            
+      414 +                                                              
+      415 +                                                              
+      416 +serve()                                                       
+
+⏺ Now let's test that the app starts correctly:
+
+⏺ Bash(timeout 8 uv run python main.py 2>&1 || true)
+  ⎿  (eval):1: command not found: timeout
+
+⏺ Bash(uv run python main.py &
+      sleep 5…)
+  ⎿  INFO:     Will watch for changes in these directories: ['/Users/shaw/D
+     ocuments/_code/_stv/_repos/subagents-vs-teams/task-2/subagent']
+     INFO:     Uvicorn running on http://0.0.0.0:5001 (Press CTRL+C to quit
+     … +16 lines (ctrl+o to expand)
+
+⏺ Server starts and serves the home page. Let me do a quick functional test:
+
+⏺ Bash(uv run python main.py &
+      SERVER_PID=$!…)
+  ⎿  INFO:     Will watch for changes in these directories: ['/Users/shaw/D
+     ocuments/_code/_stv/_repos/subagents-vs-teams/task-2/subagent']
+     ERROR:    [Errno 48] Address already in use
+     … +22 lines (ctrl+o to expand)
+  ⎿  (timeout 1m)
+
+⏺ Bash(pkill -f "uvicorn\|main.py" 2>/dev/null; sleep 1; lsof -i :5001 | grep
+      LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null; sleep 1; echo
+      "cleared")
+  ⎿  cleared
+
+⏺ Bash(uv run python main.py &
+      SERVER_PID=$!…)
+  ⎿  Running in the background (↓ to manage)
+  ⎿  (timeout 1m)
+
+⏺ Task Output ba7664f
+  ⎿  INFO:     Will watch for changes in these directories: ['/Users/shaw/D
+     ocuments/_code/_stv/_repos/subagents-vs-teams/task-2/subagent']
+     INFO:     Uvicorn running on http://0.0.0.0:5001 (Press CTRL+C to quit
+     … +34 lines (ctrl+o to expand)
+
+⏺ Stop Task
+  ⎿  uv run python main.py &
+     SERVER_PID=$!… · stopped
+
+⏺ Bash(pkill -f "uvicorn\|uv run python main" 2>/dev/null; sleep 2; echo
+      "cleared")
+  ⎿  cleared
+
+⏺ Now let me run a comprehensive test to verify all the acceptance criteria
+  programmatically:
+
+⏺ Bash(uv run python main.py &
+      SERVER_PID=$!…)
+  ⎿  INFO:     Will watch for changes in these directories: ['/Users/shaw/D
+     ocuments/_code/_stv/_repos/subagents-vs-teams/task-2/subagent']
+     INFO:     Uvicorn running on http://0.0.0.0:5001 (Press CTRL+C to quit
+     … +24 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+⏺ All 6 acceptance criteria pass. Let me also verify the cache behavior properly
+   (clean DB then re-fetch):
+
+⏺ Bash(pkill -f "uvicorn\|uv run python main" 2>/dev/null; sleep 1; echo "done")
+  ⎿  done
+
+⏺ Bash(# Quick verification: delete DB and test a fresh fetch to confirm yt-dlp
+      is actually called
+      rm -f course.db…)
+  ⎿  SQLITE_LOG: statement aborts at 40: disk I/O error; [
+         CREATE TABLE IF NOT EXISTS playlists (
+             playlist_id TEXT PRIMARY KEY,
+     … +23 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+⏺ Bash(pkill -f "uvicorn\|uv run python main" 2>/dev/null; sleep 2
+      rm -f course.db course.db-wal course.db-shm…)
+  ⎿  cleaned
+
+⏺ Bash(uv run python main.py &
+      SERVER_PID=$!…)
+  ⎿  INFO:     Will watch for changes in these directories: ['/Users/shaw/D
+     ocuments/_code/_stv/_repos/subagents-vs-teams/task-2/subagent']
+     ERROR:    [Errno 48] Address already in use
+     … +9 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+⏺ Bash(lsof -i :5001 2>/dev/null | grep LISTEN)
+  ⎿  Python  32702 shaw    6u  IPv4 0x698cc7a554d59f62      0t0  TCP *:comm
+     plex-link (LISTEN)
+     Python  32704 shaw    6u  IPv4 0x698cc7a554d59f62      0t0  TCP *:comm
+     plex-link (LISTEN)
+
+⏺ Bash(kill -9 32702 32704 2>/dev/null; sleep 2; lsof -i :5001 2>/dev/null |
+      grep LISTEN || echo "port clear")
+  ⎿  port clear
+
+⏺ Bash(rm -f course.db course.db-wal course.db-shm…)
+  ⎿  INFO:     Will watch for changes in these directories: ['/Users/shaw/D
+     ocuments/_code/_stv/_repos/subagents-vs-teams/task-2/subagent']
+     INFO:     Uvicorn running on http://0.0.0.0:5001 (Press CTRL+C to quit
+     … +18 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+⏺ All tests pass. Fresh fetch takes 624ms (yt-dlp network call), cached fetch
+  takes 22ms. Let me now create the README:
+
+⏺ Read 1 file (ctrl+o to expand)
+
+⏺ Write(README.md)
+  ⎿  Wrote 30 lines to README.md
+     # YouTube Course Creator
+
+     A distraction-free course viewer for YouTube playlists, with progress
+     tracking and per-lesson notes.
+
+     ## Startup
+
+     ```bash
+     uv run python main.py
+     ```
+
+     … +20 lines (ctrl+o to expand)
+
+⏺ Let me do one final end-to-end verification of all acceptance criteria:
+
+⏺ Bash(pkill -f "uvicorn\|uv run python main" 2>/dev/null; sleep 1; echo
+      "cleared")
+  ⎿  cleared
+
+⏺ Bash(uv run python main.py &
+      SERVER_PID=$!…)
+  ⎿  INFO:     Will watch for changes in these directories: ['/Users/shaw/D
+     ocuments/_code/_stv/_repos/subagents-vs-teams/task-2/subagent']
+     INFO:     Uvicorn running on http://0.0.0.0:5001 (Press CTRL+C to quit
+     … +27 lines (ctrl+o to expand)
+  ⎿  (timeout 1m)
+
+⏺ All 6 acceptance criteria pass. Here's a summary of what was built:
+
+  ---
+  YouTube Course Creator
+
+  6/6 acceptance criteria verified:
+
+  #: 1
+  Criterion: uv run python main.py starts server, home page loads
+  Result: ✅ HTTP 200
+  ────────────────────────────────────────
+  #: 2
+  Criterion: Playlist URL fetches metadata, shows all 21 videos ordered
+  Result: ✅ 21 lessons
+  ────────────────────────────────────────
+  #: 3
+  Criterion: Clicking a lesson loads the correct YouTube embed
+  Result: ✅ Correct video ID
+  ────────────────────────────────────────
+  #: 4
+  Criterion: Completion toggle persists across reloads
+  Result: ✅ Stored in SQLite
+  ────────────────────────────────────────
+  #: 5
+  Criterion: Notes auto-save on blur, persist across reloads
+  Result: ✅ Stored in SQLite
+  ────────────────────────────────────────
+  #: 6
+  Criterion: Second visit to same playlist URL loads from cache
+  Result: ✅ 19ms (vs 624ms)
+
+  Files created:
+  - main.py — FastHTML app (~230 lines, no frameworks beyond FastHTML/HTMX)
+  - pyproject.toml — uv project with python-fasthtml + yt-dlp dependencies
+  - README.md — startup instructions
+
+  Architecture:
+  - HTMX partial updates for lesson switching (swaps #main-area content) and OOB
+   swap for sidebar highlighting/progress bar
+  - Silent auto-save for notes on blur via hx-trigger="blur"
+  - SQLite via fastlite with two tables: playlists (URL → metadata cache) and
+  progress (completion + notes per video)
+
+✻ Crunched for 13m 24s
