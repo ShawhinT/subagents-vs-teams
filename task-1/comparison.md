@@ -1,6 +1,6 @@
-# Task 1: Subagent vs Agent Team Comparison
+# Task 1: Construct Lead List
 
-**Task**: Build a lead list of 50 contacts at technology/software companies in Dallas, TX.
+**Task**: Build a lead list of 50 contacts at PE-backed, midsized, technology/software companies in Dallas, TX.
 
 **Model**: Claude Sonnet 4.6 (Claude Max)
 

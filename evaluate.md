@@ -35,7 +35,7 @@ Analyze the Claude Code session logs for a completed subagent vs agent team comp
 4. Write a `comparison.md` in the task directory using this format:
 
 ```markdown
-# Task N: Subagent vs Agent Team Comparison
+# Task N: [3-Word Task Description]
 
 **Task**: [one-line description from prompt.txt]
 

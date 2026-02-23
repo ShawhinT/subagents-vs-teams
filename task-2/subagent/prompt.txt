@@ -1,0 +1,57 @@
+You are responsible for completing the following task. Decide for yourself how best to accomplish it.
+
+Task: Build a "YouTube Course Creator" web app. The user pastes a YouTube playlist URL and gets a clean, distraction-free course page with progress tracking and per-lesson notes.
+
+## Tech Stack
+
+- **uv** for project management. Initialize with `uv init`, add dependencies with `uv add`. All commands should run through `uv run` (e.g., `uv run python main.py`).
+- **FastHTML** (`from fasthtml.common import *`, `fast_app()`, HTMX-style partial updates). No React, no heavy JS frameworks.
+- **yt-dlp** (Python library) for playlist metadata extraction. Extract titles, video IDs, thumbnails, and ordering — do not download any video files. No YouTube Data API key required.
+- **SQLite** via FastHTML's built-in database support for all persistence.
+
+## Features to Build
+
+1. **Playlist input**: A home page with a single input field for a YouTube playlist URL. On submit, fetch playlist metadata via yt-dlp and redirect to the course page.
+
+2. **Playlist metadata extraction**: Use yt-dlp to extract the playlist title and an ordered list of videos (title, video ID, thumbnail URL, duration). Cache the result in SQLite so repeat visits don't re-fetch.
+
+3. **Course page layout**:
+   - Left sidebar: ordered lesson list showing title, duration, and completion status. Clicking a lesson loads it in the main area.
+   - Main area: YouTube embed player (iframe) for the selected lesson, lesson title, and a notes editor below.
+   - The sidebar should highlight the current lesson and visually distinguish completed lessons.
+
+4. **Completion tracking**: A "Mark complete" / "Mark incomplete" toggle per lesson. State persists in SQLite. The sidebar reflects completion status (e.g., checkmark icon or strikethrough).
+
+5. **Per-lesson notes**: A textarea below the video player for freeform notes on the current lesson. Notes auto-save (on blur or via HTMX partial update) to SQLite. Notes persist across page reloads.
+
+6. **Local persistence (SQLite)**: Three concerns stored locally:
+   - Playlist cache (playlist URL → metadata, so yt-dlp isn't called again)
+   - Lesson completion state (playlist + video → complete boolean)
+   - Lesson notes (playlist + video → text)
+
+## Out of Scope (Do Not Build)
+
+- User accounts or authentication
+- Shareable links or multi-user features
+- Quizzes, certificates, or assessments
+- AI-generated summaries or transcripts
+- Analytics dashboards or progress charts
+
+## Acceptance Criteria
+
+The app is scored on 6 points (1 point each):
+
+1. **Runs**: `uv run python main.py` starts the server with no errors, and the home page loads in a browser.
+2. **Playlist fetch**: Pasting a valid YouTube playlist URL fetches metadata and displays the course page with all videos listed in order.
+3. **Video playback**: Clicking a lesson in the sidebar loads the correct YouTube embed in the main area.
+4. **Completion toggle**: Toggling a lesson's completion status persists across page reloads.
+5. **Notes**: Writing a note for a lesson persists across page reloads.
+6. **Playlist cache**: Visiting the same playlist URL a second time loads instantly from SQLite without calling yt-dlp again.
+
+Before finishing, verify the app against every acceptance criterion and fix any failures.
+
+## Deliverable
+
+A working FastHTML application in this directory, managed by uv. At minimum: `main.py` (the app) and a `pyproject.toml` with dependencies (`python-fasthtml`, `yt-dlp`). Include a brief README.md with the startup command (`uv run python main.py`).
+
+Test with this playlist (or any public playlist): https://www.youtube.com/playlist?list=PLz-ep5RbHosUgGar7MWEEOHp8xolnBbvm
