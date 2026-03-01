@@ -2,6 +2,7 @@
 
 Benchmarking Claude Code's **subagent** approach (single session using the Task tool) against **agent teams** (multi-session via `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`) on identical tasks. Compares token usage, compute time, and output quality.
 
+Resources:
 - [YouTube Explainer](https://youtu.be/jT1rg3TBf-I)
 
 ## Results
